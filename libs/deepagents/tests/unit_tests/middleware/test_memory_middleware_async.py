@@ -5,6 +5,7 @@ This module contains async versions of memory middleware tests.
 
 from pathlib import Path
 
+import pytest
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage
 
@@ -399,3 +400,14 @@ async def test_abefore_agent_batches_download_into_single_call(tmp_path: Path) -
     assert result is not None
     assert len(result["memory_contents"]) == 3
     assert backend.adownload_files_call_count == 1
+
+
+async def test_abefore_agent_non_utf8_names_file(tmp_path: Path) -> None:
+    """Non-UTF-8 AGENTS.md raises ValueError naming the file (async)."""
+    (tmp_path / "AGENTS.md").write_bytes("café\n".encode("cp1252"))
+    mw = MemoryMiddleware(
+        backend=FilesystemBackend(root_dir=str(tmp_path), virtual_mode=True),
+        sources=["/AGENTS.md"],
+    )
+    with pytest.raises(ValueError, match=r"Failed to decode /AGENTS\.md as UTF-8"):
+        await mw.abefore_agent({}, None, {})

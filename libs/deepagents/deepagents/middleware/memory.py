@@ -305,7 +305,11 @@ class MemoryMiddleware(AgentMiddleware[MemoryState, ContextT, ResponseT]):
                 msg = f"Failed to download {path}: {response.error}"
                 raise ValueError(msg)
             if response.content is not None:
-                contents[path] = response.content.decode("utf-8")
+                try:
+                    contents[path] = response.content.decode("utf-8")
+                except UnicodeDecodeError as exc:
+                    msg = f"Failed to decode {path} as UTF-8: {exc}"
+                    raise ValueError(msg) from exc
                 logger.debug("Loaded memory from: %s", path)
 
         return MemoryStateUpdate(memory_contents=contents)
@@ -339,7 +343,11 @@ class MemoryMiddleware(AgentMiddleware[MemoryState, ContextT, ResponseT]):
                 msg = f"Failed to download {path}: {response.error}"
                 raise ValueError(msg)
             if response.content is not None:
-                contents[path] = response.content.decode("utf-8")
+                try:
+                    contents[path] = response.content.decode("utf-8")
+                except UnicodeDecodeError as exc:
+                    msg = f"Failed to decode {path} as UTF-8: {exc}"
+                    raise ValueError(msg) from exc
                 logger.debug("Loaded memory from: %s", path)
 
         return MemoryStateUpdate(memory_contents=contents)

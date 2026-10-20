@@ -1185,3 +1185,14 @@ def test_multiline_html_comment_stripped_from_memory(tmp_path: Path) -> None:
     assert "line two of comment" not in injected
     assert "preamble" in injected
     assert "postamble" in injected
+
+
+def test_before_agent_non_utf8_names_file(tmp_path: Path) -> None:
+    """Non-UTF-8 AGENTS.md raises ValueError naming the file (sync)."""
+    (tmp_path / "AGENTS.md").write_bytes("café\n".encode("cp1252"))
+    mw = MemoryMiddleware(
+        backend=FilesystemBackend(root_dir=str(tmp_path), virtual_mode=True),
+        sources=["/AGENTS.md"],
+    )
+    with pytest.raises(ValueError, match=r"Failed to decode /AGENTS\.md as UTF-8"):
+        mw.before_agent({}, None, {})
